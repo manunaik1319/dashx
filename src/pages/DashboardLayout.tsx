@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Routes, Route, useNavigate, NavLink } from 'react-router-dom'
+import { Routes, Route, useNavigate, NavLink, useLocation } from 'react-router-dom'
 import {
   Bell, Plus, Download, Upload, SortAsc, SortDesc,
   X, Archive, Menu, Zap,
+  Home, Layers, BookMarked, Heart, Clock, MessageSquare,
 } from 'lucide-react'
 import Sidebar from '../components/Sidebar'
 import StatsCards from '../components/StatsCards'
@@ -355,7 +356,89 @@ export default function DashboardLayout() {
           onSaved={refreshAll}
         />
       )}
+
+      {/* Mobile Bottom Nav */}
+      <MobileBottomNav onAddClick={() => setShowAddModal(true)} />
     </div>
+  )
+}
+
+// ─── Mobile Bottom Nav ────────────────────────────────────────────────────────
+function MobileBottomNav({ onAddClick }: { onAddClick: () => void }) {
+  const location = useLocation()
+
+  const navItems = [
+    { to: '/dashboard',             label: 'Home',       icon: Home,          id: 'overview',     exact: true },
+    { to: '/dashboard/resources',   label: 'Resources',  icon: Layers,        id: 'resources',    exact: false },
+    { to: null,                     label: 'Add',        icon: Plus,          id: 'add',          exact: false },
+    { to: '/dashboard/favorites',   label: 'Favorites',  icon: Heart,         id: 'favorites',    exact: false },
+    { to: '/dashboard/collections', label: 'Collections',icon: BookMarked,    id: 'collections',  exact: false },
+  ]
+
+  return (
+    <nav
+      className="mobile-bottom-nav"
+      aria-label="Mobile navigation"
+      style={{
+        display: 'none',
+        position: 'fixed', bottom: 0, left: 0, right: 0,
+        height: '64px',
+        background: 'var(--bg-sidebar)',
+        borderTop: '1px solid var(--border)',
+        zIndex: 990,
+        alignItems: 'center',
+        justifyContent: 'space-around',
+        paddingBottom: 'env(safe-area-inset-bottom)',
+      }}
+    >
+      {navItems.map(item => {
+        const Icon = item.icon
+        if (item.id === 'add') {
+          return (
+            <button
+              key="add"
+              onClick={onAddClick}
+              aria-label="Add resource"
+              style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                gap: '3px', flex: 1, height: '100%', border: 'none', background: 'none',
+                color: 'var(--text-muted)', cursor: 'pointer',
+              }}
+            >
+              <span style={{
+                width: '40px', height: '40px', borderRadius: '50%',
+                background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 2px 12px rgba(0,0,0,0.4)',
+              }}>
+                <Icon size={20} color="#000" strokeWidth={2.5} />
+              </span>
+            </button>
+          )
+        }
+
+        const isActive = item.exact
+          ? location.pathname === item.to
+          : location.pathname.startsWith(item.to!)
+
+        return (
+          <NavLink
+            key={item.id}
+            to={item.to!}
+            end={item.exact}
+            style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              gap: '3px', flex: 1, height: '100%',
+              color: isActive ? 'var(--text-primary)' : 'var(--text-muted)',
+              textDecoration: 'none', fontSize: '10px', fontWeight: isActive ? '600' : '400',
+              transition: 'color 0.12s',
+            }}
+          >
+            <Icon size={20} strokeWidth={isActive ? 2.2 : 1.8} />
+            <span>{item.label}</span>
+          </NavLink>
+        )
+      })}
+    </nav>
   )
 }
 

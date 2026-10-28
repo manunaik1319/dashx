@@ -173,6 +173,11 @@ input, textarea, select {
   display: none !important;
 }
 
+/* Mobile bottom nav — hidden on desktop, shown via media query */
+.mobile-bottom-nav {
+  display: none !important;
+}
+
 /* Tablet Landscape & Below (< 1100px) */
 @media (max-width: 1100px) {
   .dashboard-right-panel {
@@ -224,6 +229,16 @@ input, textarea, select {
 
   .hide-on-compact {
     display: none !important;
+  }
+
+  /* Show mobile bottom nav */
+  .mobile-bottom-nav {
+    display: flex !important;
+  }
+
+  /* Push main content up above bottom nav */
+  main {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom)) !important;
   }
 }
 
