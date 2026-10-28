@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Routes, Route, useNavigate, NavLink, useLocation } from 'react-router-dom'
+import { Routes, Route, useNavigate, useLocation, NavLink } from 'react-router-dom'
 import {
   Bell, Plus, Download, Upload, SortAsc, SortDesc,
   X, Archive, Menu, Zap,
-  Home, Layers, BookMarked, Heart,
+  Home, Layers, BookMarked, Heart, LogOut,
 } from 'lucide-react'
 import Sidebar from '../components/Sidebar'
 import StatsCards from '../components/StatsCards'
@@ -20,7 +20,7 @@ import type { Category, Collection, Resource, DashboardStats, FilterState, SortO
 
 
 export default function DashboardLayout() {
-  const { user } = useAuth()
+  const { user, signOut } = useAuth()
   const navigate  = useNavigate()
 
   // Shared state
@@ -35,6 +35,7 @@ export default function DashboardLayout() {
   const [importExportMsg, setImportExportMsg] = useState<string | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen]   = useState(false)
   const [mobileQuickSaveOpen, setMobileQuickSaveOpen] = useState(false)
+  const [userMenuOpen, setUserMenuOpen]       = useState(false)
 
   const loadCategories = useCallback(async () => {
     const cats = await getCategories()
@@ -63,6 +64,11 @@ export default function DashboardLayout() {
   }, [loadCategories, loadCollections, loadStats])
 
   useEffect(() => { refreshAll() }, [refreshAll])
+
+  async function handleSignOut() {
+    await signOut()
+    navigate('/login', { replace: true })
+  }
 
   async function handleExport() {
     try {
@@ -123,22 +129,41 @@ export default function DashboardLayout() {
           justifyContent: 'space-between', gap: '8px',
           padding: '0 16px', borderBottom: '1px solid var(--border)',
           background: 'var(--bg-base)', flexShrink: 0,
+          position: 'relative',
         }}>
-          {/* Left section: mobile hamburger + message */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+          {/* Left: hamburger (mobile) + import/export message */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
             <button
               className="mobile-nav-toggle"
               onClick={() => setMobileMenuOpen(true)}
               aria-label="Open navigation menu"
               style={{
-                color: 'var(--text-primary)',
-                padding: '6px',
-                borderRadius: 'var(--radius-md)',
-                lineHeight: 0,
+                color: 'var(--text-primary)', padding: '6px',
+                borderRadius: 'var(--radius-md)', lineHeight: 0,
               }}
             >
-              <Menu size={18} />
+              <Menu size={20} />
             </button>
+
+            {/* Desktop: Dashx logo text */}
+            <span className="desktop-logo" style={{ fontSize: '15px', fontWeight: '700', letterSpacing: '-0.2px' }}>
+              Dashboard
+            </span>
+
+            {/* Mobile center: Dashx brand */}
+            <div className="mobile-topbar-brand" style={{
+              display: 'none', alignItems: 'center', gap: '6px',
+              position: 'absolute', left: '50%', transform: 'translateX(-50%)',
+            }}>
+              <div style={{
+                width: '22px', height: '22px', background: '#fff', borderRadius: '5px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <Zap size={13} color="#000" strokeWidth={2.5} />
+              </div>
+              <span style={{ fontSize: '15px', fontWeight: '700', letterSpacing: '-0.2px' }}>Dashx</span>
+            </div>
+
             {importExportMsg && (
               <span style={{ fontSize: '12px', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {importExportMsg}
@@ -146,32 +171,31 @@ export default function DashboardLayout() {
             )}
           </div>
 
-          {/* Right section: actions */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* Right: actions */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            {/* Quick Save — tablet only */}
             <button
               className="mobile-quick-save-toggle"
               onClick={() => setMobileQuickSaveOpen(true)}
               aria-label="Quick Save"
               style={{
-                display: 'none',
-                alignItems: 'center', gap: '4px',
+                display: 'none', alignItems: 'center', gap: '4px',
                 padding: '6px 10px',
-                background: 'var(--bg-card)',
-                border: '1px solid var(--border)',
-                borderRadius: 'var(--radius-md)',
-                fontSize: '12px',
-                color: 'var(--text-primary)',
+                background: 'var(--bg-card)', border: '1px solid var(--border)',
+                borderRadius: 'var(--radius-md)', fontSize: '12px', color: 'var(--text-primary)',
               }}
             >
               <Zap size={13} color="var(--accent-green)" />
               <span className="hide-on-compact">Quick Save</span>
             </button>
 
+            {/* Export — hidden on mobile */}
             <button
               id="export-btn"
               onClick={handleExport}
               title="Export data"
               aria-label="Export all dashboard data to JSON"
+              className="hide-on-mobile"
               style={{ color: 'var(--text-muted)', padding: '6px', borderRadius: 'var(--radius-md)', lineHeight: 0 }}
               onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'var(--bg-active)' }}
               onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent' }}
@@ -179,9 +203,11 @@ export default function DashboardLayout() {
               <Download size={16} />
             </button>
 
+            {/* Import — hidden on mobile */}
             <label
               title="Import data"
               aria-label="Import resources from JSON file"
+              className="hide-on-mobile"
               style={{ cursor: 'pointer', color: 'var(--text-muted)', padding: '6px', borderRadius: 'var(--radius-md)', lineHeight: 0, display: 'flex', alignItems: 'center' }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)'; (e.currentTarget as HTMLElement).style.background = 'var(--bg-active)' }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; (e.currentTarget as HTMLElement).style.background = 'transparent' }}
@@ -190,11 +216,13 @@ export default function DashboardLayout() {
               <input id="import-input" type="file" accept=".json" onChange={handleImport} style={{ display: 'none' }} />
             </label>
 
+            {/* Add resource — hidden on mobile (use bottom nav + instead) */}
             <button
               id="add-resource-header-btn"
               onClick={() => setShowAddModal(true)}
               title="Add resource"
               aria-label="Add new resource"
+              className="hide-on-mobile"
               style={{
                 display: 'flex', alignItems: 'center', gap: '6px',
                 padding: '6px 12px',
@@ -206,27 +234,71 @@ export default function DashboardLayout() {
               <span>Add</span>
             </button>
 
+            {/* Notifications */}
             <button
               id="notifications-btn"
               title="Notifications"
               aria-label="Notifications"
-              style={{ color: 'var(--text-muted)', padding: '6px', borderRadius: 'var(--radius-md)', lineHeight: 0, position: 'relative' }}
+              className="hide-on-mobile"
+              style={{ color: 'var(--text-muted)', padding: '6px', borderRadius: 'var(--radius-md)', lineHeight: 0 }}
             >
               <Bell size={16} />
             </button>
 
-            <div
-              title={`Signed in as ${user?.email ?? 'User'}`}
-              aria-label={`User avatar for ${user?.email ?? 'User'}`}
-              style={{
-                width: '32px', height: '32px',
-                background: '#2a2a2a', border: '1px solid var(--border)',
-                borderRadius: '50%',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '12px', fontWeight: '600', color: 'var(--text-primary)',
-              }}
-            >
-              {user?.email?.[0]?.toUpperCase() ?? 'U'}
+            {/* Avatar & Dropdown Menu */}
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                title={`Signed in as ${user?.email ?? 'User'}`}
+                aria-label={`User avatar for ${user?.email ?? 'User'}`}
+                style={{
+                  width: '32px', height: '32px',
+                  background: '#2a2a2a', border: '1px solid var(--border)',
+                  borderRadius: '50%',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '12px', fontWeight: '600', color: 'var(--text-primary)',
+                  cursor: 'pointer', flexShrink: 0,
+                }}
+              >
+                {user?.email?.[0]?.toUpperCase() ?? 'U'}
+              </button>
+
+              {userMenuOpen && (
+                <>
+                  <div
+                    style={{ position: 'fixed', inset: 0, zIndex: 991 }}
+                    onClick={() => setUserMenuOpen(false)}
+                  />
+                  <div style={{
+                    position: 'absolute', right: 0, top: '40px',
+                    width: '210px', background: 'var(--bg-card)',
+                    border: '1px solid var(--border)', borderRadius: 'var(--radius-md)',
+                    padding: '8px', zIndex: 992,
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
+                  }}>
+                    <div style={{ padding: '6px 8px', borderBottom: '1px solid var(--border)', marginBottom: '6px' }}>
+                      <p style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Signed in as</p>
+                      <p style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {user?.email ?? 'User'}
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleSignOut}
+                      style={{
+                        width: '100%', display: 'flex', alignItems: 'center', gap: '8px',
+                        padding: '8px', borderRadius: '4px', fontSize: '12px',
+                        color: '#ef4444', background: 'transparent', cursor: 'pointer',
+                        textAlign: 'left',
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.1)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <LogOut size={13} />
+                      <span>Sign out</span>
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </header>
@@ -462,8 +534,6 @@ function OverviewPage({
       <h1 style={{ fontSize: '22px', fontWeight: '700', marginBottom: '20px', letterSpacing: '-0.3px' }}>Dashboard</h1>
 
       {/* Tab nav */}
-      <DashboardTabs active="overview" />
-
       <StatsCards stats={stats} loading={statsLoading} />
 
       {/* Recently saved */}
@@ -570,8 +640,6 @@ function ResourcesPage({
         </div>
       </div>
 
-      <DashboardTabs active="resources" />
-
       {/* Type filter */}
       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '16px' }}>
         {[
@@ -659,8 +727,6 @@ function CollectionsPage({ collections, onRefresh }: { collections: Collection[]
         </button>
       </div>
 
-      <DashboardTabs active="collections" />
-
       {adding && (
         <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '16px', marginBottom: '16px' }}>
           <h3 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '12px' }}>New Collection</h3>
@@ -737,7 +803,6 @@ function AiChatsPage({ onEdit, onRefresh }: { onEdit: (r: Resource) => void; onR
   return (
     <div>
       <h1 style={{ fontSize: '22px', fontWeight: '700', marginBottom: '20px', letterSpacing: '-0.3px' }}>AI Chats</h1>
-      <DashboardTabs active="ai-chats" />
       {loading ? <ResourceListSkeleton /> : resources.length === 0 ? (
         <EmptyState message="No AI chat links saved yet. Save links to ChatGPT, Claude, Gemini and other AI conversations." />
       ) : (
@@ -761,7 +826,6 @@ function FavoritesPage({ onEdit, onRefresh }: { onEdit: (r: Resource) => void; o
   return (
     <div>
       <h1 style={{ fontSize: '22px', fontWeight: '700', marginBottom: '20px', letterSpacing: '-0.3px' }}>Favorites</h1>
-      <DashboardTabs active="favorites" />
       {loading ? <ResourceListSkeleton /> : resources.length === 0 ? (
         <EmptyState message="No favorites yet. Star any resource to add it here." />
       ) : (
@@ -785,7 +849,6 @@ function RecentPage({ onEdit, onRefresh }: { onEdit: (r: Resource) => void; onRe
   return (
     <div>
       <h1 style={{ fontSize: '22px', fontWeight: '700', marginBottom: '20px', letterSpacing: '-0.3px' }}>Recently Saved</h1>
-      <DashboardTabs active="recent" />
       {loading ? <ResourceListSkeleton /> : resources.length === 0 ? (
         <EmptyState message="No resources saved yet." />
       ) : (
@@ -798,42 +861,6 @@ function RecentPage({ onEdit, onRefresh }: { onEdit: (r: Resource) => void; onRe
 }
 
 // ─── Shared Components ────────────────────────────────────────────────────────
-function DashboardTabs({ active }: { active: string }) {
-  const tabs = [
-    { label: 'Overview',    to: '/dashboard',             id: 'overview' },
-    { label: 'Resources',   to: '/dashboard/resources',   id: 'resources' },
-    { label: 'Collections', to: '/dashboard/collections', id: 'collections' },
-    { label: 'AI Chats',    to: '/dashboard/ai-chats',    id: 'ai-chats' },
-    { label: 'Insights',    to: '/dashboard',             id: 'insights' },
-  ]
-  return (
-    <div style={{ display: 'flex', gap: '2px', marginBottom: '20px', borderBottom: '1px solid var(--border)', paddingBottom: '0' }}>
-      {tabs.map(tab => {
-        const isActive = tab.id === active
-        return (
-          <NavLink
-            key={tab.id}
-            to={tab.to}
-            end={tab.to === '/dashboard'}
-            id={`tab-${tab.id}`}
-            style={{
-              padding: '6px 14px 10px',
-              fontSize: '13px', fontWeight: isActive ? '500' : '400',
-              color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-              borderBottom: isActive ? '2px solid var(--text-primary)' : '2px solid transparent',
-              textDecoration: 'none',
-              transition: 'color 0.12s',
-              marginBottom: '-1px',
-            }}
-          >
-            {tab.label}
-          </NavLink>
-        )
-      })}
-    </div>
-  )
-}
-
 function EmptyState({ message }: { message: string }) {
   return (
     <div style={{

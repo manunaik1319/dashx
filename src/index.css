@@ -178,6 +178,14 @@ input, textarea, select {
   display: none !important;
 }
 
+.mobile-topbar-brand {
+  display: none !important;
+}
+
+.desktop-logo {
+  display: block;
+}
+
 /* Tablet Landscape & Below (< 1100px) */
 @media (max-width: 1100px) {
   .dashboard-right-panel {
@@ -228,6 +236,18 @@ input, textarea, select {
   }
 
   .hide-on-compact {
+    display: none !important;
+  }
+
+  .hide-on-mobile {
+    display: none !important;
+  }
+
+  .mobile-topbar-brand {
+    display: flex !important;
+  }
+
+  .desktop-logo {
     display: none !important;
   }
 
