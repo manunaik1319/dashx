@@ -3,7 +3,7 @@ import { Routes, Route, useNavigate, NavLink, useLocation } from 'react-router-d
 import {
   Bell, Plus, Download, Upload, SortAsc, SortDesc,
   X, Archive, Menu, Zap,
-  Home, Layers, BookMarked, Heart, Clock, MessageSquare,
+  Home, Layers, BookMarked, Heart,
 } from 'lucide-react'
 import Sidebar from '../components/Sidebar'
 import StatsCards from '../components/StatsCards'
